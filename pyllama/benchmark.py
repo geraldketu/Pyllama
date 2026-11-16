@@ -71,10 +71,14 @@ def generate(args: argparse.Namespace) -> None:
     else:
         from openai import OpenAI
 
+        import os
+
+        if not os.environ.get("OPENAI_API_KEY"):
+            raise SystemExit("OPENAI_API_KEY is not set (the OpenAI client only reads that exact name).")
         client = OpenAI()
         answer = lambda instr: _openai_answer(client, args.model, instr)  # noqa: E731
 
-    out = Path("results") / f"{args.name}.jsonl"
+    out = args.results_dir / f"{args.name}.jsonl"
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w", encoding="utf-8") as f:
         for i, p in enumerate(problems, 1):
@@ -136,7 +140,7 @@ def evaluate(args: argparse.Namespace) -> None:
 
     report = "\n".join(lines)
     print(report)
-    out = Path("results") / "summary.md"
+    out = args.results_dir / "summary.md"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(f"# CodeBERT cosine similarity to reference solutions\n\n{report}\n", encoding="utf-8")
     (out.with_suffix(".json")).write_text(json.dumps(scores, indent=2), encoding="utf-8")
@@ -146,6 +150,7 @@ def evaluate(args: argparse.Namespace) -> None:
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--problems", type=Path, default=PROBLEMS)
+    ap.add_argument("--results-dir", type=Path, default=Path("results"), help="where results/*.jsonl and summary.md go")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     g = sub.add_parser("generate")

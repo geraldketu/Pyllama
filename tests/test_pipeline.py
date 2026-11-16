@@ -188,3 +188,29 @@ def test_problem_file_schema():
         assert {"id", "title", "category", "difficulty", "prompt", "reference"} <= set(p)
         compile(p["reference"], p["id"], "exec")
     json.dumps(problems)
+
+
+# ---------------------------------------------------------------- compat / publishing helpers
+
+
+def test_warmup_steps_is_three_percent():
+    pytest.importorskip("transformers")
+    from pyllama.compat import warmup_steps
+
+    # the Colab run: 5,038 examples, batch 2 x accum 8 -> 315 steps, 3% warmup
+    assert warmup_steps(5038, 2, 8, 1) == 9
+    assert warmup_steps(10, 2, 8, 1) == 1  # never zero
+
+
+def test_model_card_and_missing_adapter(tmp_path):
+    pytest.importorskip("transformers")
+    from pyllama import push_to_hub
+
+    card = push_to_hub.model_card("codellama/CodeLlama-7b-Instruct-hf", "me/PyLLaMa", "Loss 1.23.")
+    assert "base_model: codellama/CodeLlama-7b-Instruct-hf" in card
+    assert 'PeftModel.from_pretrained(base, "me/PyLLaMa")' in card
+    assert "## Training\n\nLoss 1.23." in card
+    assert "## Training" not in push_to_hub.model_card("b", "r", None)
+
+    with pytest.raises(SystemExit, match="No LoRA adapter"):
+        push_to_hub.main(["--adapter", str(tmp_path), "--repo-id", "me/PyLLaMa"])

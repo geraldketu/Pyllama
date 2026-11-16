@@ -27,9 +27,10 @@ from transformers import (
     TrainingArguments,
 )
 
+from pyllama.compat import dtype_kwarg, warmup_steps
 from pyllama.prompts import build_example
 
-DEFAULT_BASE = "codellama/CodeLlama-7b-Instruct-hf"
+from pyllama import DEFAULT_BASE  # noqa: E402  (re-exported for backwards compatibility)
 
 
 def tokenize_example(rec: dict, tokenizer, max_len: int) -> dict:
@@ -42,9 +43,11 @@ def tokenize_example(rec: dict, tokenizer, max_len: int) -> dict:
     return {"input_ids": input_ids, "attention_mask": [1] * len(input_ids), "labels": labels}
 
 
-def load_split(path: Path, tokenizer, max_len: int) -> Dataset:
+def load_split(path: Path, tokenizer, max_len: int, max_samples: int | None = None, seed: int = 42) -> Dataset:
     rows = json.loads(path.read_text(encoding="utf-8"))
     ds = Dataset.from_list(rows)
+    if max_samples is not None and len(ds) > max_samples:
+        ds = ds.shuffle(seed=seed).select(range(max_samples))
     ds = ds.map(lambda r: tokenize_example(r, tokenizer, max_len), remove_columns=ds.column_names)
     # Drop examples whose answer was entirely truncated away.
     return ds.filter(lambda r: any(label != -100 for label in r["labels"]))
@@ -65,6 +68,14 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--lora-alpha", type=int, default=32)
     ap.add_argument("--lora-dropout", type=float, default=0.05)
     ap.add_argument("--load-in-4bit", action="store_true", help="QLoRA (requires bitsandbytes + CUDA)")
+    ap.add_argument("--max-train-samples", type=int, default=None, help="cap training set size (time budget)")
+    ap.add_argument("--max-val-samples", type=int, default=500)
+    ap.add_argument("--eval-steps", type=int, default=200, help="also the checkpoint interval")
+    ap.add_argument(
+        "--resume",
+        action="store_true",
+        help="resume from the latest checkpoint in --output-dir (e.g. after a Colab disconnect)",
+    )
     ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args(argv)
 
@@ -75,7 +86,7 @@ def main(argv: list[str] | None = None) -> None:
 
     bf16 = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
     compute_dtype = torch.bfloat16 if bf16 else torch.float16
-    model_kwargs = {"torch_dtype": compute_dtype, "device_map": "auto"}
+    model_kwargs = {**dtype_kwarg(compute_dtype), "device_map": "auto"}
     if args.load_in_4bit:
         from transformers import BitsAndBytesConfig
 
@@ -101,8 +112,8 @@ def main(argv: list[str] | None = None) -> None:
     model = get_peft_model(model, lora)
     model.print_trainable_parameters()
 
-    train_ds = load_split(args.train, tokenizer, args.max_len)
-    val_ds = load_split(args.val, tokenizer, args.max_len) if args.val.exists() else None
+    train_ds = load_split(args.train, tokenizer, args.max_len, args.max_train_samples, args.seed)
+    val_ds = load_split(args.val, tokenizer, args.max_len, args.max_val_samples, args.seed) if args.val.exists() else None
     print(f"train examples: {len(train_ds)}, val examples: {len(val_ds) if val_ds else 0}")
 
     training_args = TrainingArguments(
@@ -113,12 +124,12 @@ def main(argv: list[str] | None = None) -> None:
         per_device_eval_batch_size=args.batch_size,
         gradient_accumulation_steps=args.grad_accum,
         lr_scheduler_type="cosine",
-        warmup_ratio=0.03,
+        warmup_steps=warmup_steps(len(train_ds), args.batch_size, args.grad_accum, args.epochs),
         logging_steps=10,
         eval_strategy="steps" if val_ds is not None else "no",
-        eval_steps=200,
+        eval_steps=args.eval_steps,
         save_strategy="steps",
-        save_steps=200,
+        save_steps=args.eval_steps,
         save_total_limit=2,
         load_best_model_at_end=val_ds is not None,
         bf16=bf16,
@@ -135,7 +146,8 @@ def main(argv: list[str] | None = None) -> None:
         eval_dataset=val_ds,
         data_collator=DataCollatorForSeq2Seq(tokenizer, padding=True, label_pad_token_id=-100),
     )
-    trainer.train()
+    has_checkpoint = args.output_dir.exists() and any(args.output_dir.glob("checkpoint-*"))
+    trainer.train(resume_from_checkpoint=True if args.resume and has_checkpoint else None)
 
     final_dir = args.output_dir / "final"
     model.save_pretrained(final_dir)

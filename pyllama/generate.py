@@ -9,17 +9,23 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import re
+from pathlib import Path
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+from pyllama.compat import dtype_kwarg
 from pyllama.prompts import build_prompt
-from pyllama.train import DEFAULT_BASE
+from pyllama import DEFAULT_BASE
 
 
 class PyLLaMa:
     def __init__(self, base_model: str = DEFAULT_BASE, adapter: str | None = None, load_in_4bit: bool = False):
-        kwargs = {"torch_dtype": torch.float16 if torch.cuda.is_available() else torch.float32, "device_map": "auto"}
+        if adapter and not Path(adapter).is_dir() and not re.fullmatch(r"[\w.-]+/[\w.-]+", adapter):
+            # Otherwise a missing local folder surfaces as a confusing "Repo id must be in the form..." error.
+            raise SystemExit(f"No adapter found at {adapter}. Train first, or pass a Hugging Face repo id like user/PyLLaMa.")
+        kwargs = {**dtype_kwarg(torch.float16 if torch.cuda.is_available() else torch.float32), "device_map": "auto"}
         if load_in_4bit:
             from transformers import BitsAndBytesConfig
 

@@ -63,6 +63,11 @@ tutorial, HOWTOs and language reference.
 
 ### 2. Fine-tune
 
+**Easiest:** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/geraldketu/Pyllama/blob/main/colab/train_pyllama.ipynb)
+runs the whole pipeline (dataset → training → Hugging Face upload → benchmark) on a Colab GPU.
+Everything is saved to Google Drive and **Run all** is safe to repeat: finished steps are skipped and
+interrupted training resumes from its last checkpoint.
+
 A 7B model with QLoRA fits on a single 16 GB GPU (e.g. Colab T4/L4):
 
 ```bash
@@ -99,6 +104,25 @@ head-to-head win count to `results/summary.md`.
 > reference in style and structure, not whether it is functionally correct. It is
 > a cheap proxy that complements, rather than replaces, unit-test-based metrics
 > such as pass@k.
+
+## Results so far
+
+**Training run (Colab, NVIDIA L4, Nov 2026)**
+
+| Setting | Value |
+|---|---|
+| Data | 150 docs.python.org pages → 5,509 examples (4,132 API, 844 concept, 533 code) |
+| Split | 5,038 train / 471 validation, split by page |
+| Method | QLoRA: 4-bit NF4 base, LoRA r=16, α=32 on q/k/v/o (16.8M trainable params, 0.25%) |
+| Schedule | 1 epoch, 315 steps, effective batch 16, lr 2e-4 cosine, max length 768 |
+| Time | ~40 minutes |
+| Loss | train 1.55 at step 10, 1.23 averaged over the epoch · **validation 1.226** |
+
+Validation loss was 1.229 at 63% of the epoch and 1.226 at the end. That's a small gain from the
+second half, so more epochs or more pages are the next lever.
+
+**Benchmark:** PyLLaMa answers for all 20 problems are generated. The GPT-3.5 comparison and
+CodeBERT scoring are still to be run (section 7 of the notebook); results will be added here.
 
 ## Tests
 
