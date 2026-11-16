@@ -1,0 +1,162 @@
+[
+  {
+    "id": "contains-duplicate",
+    "title": "Contains Duplicate",
+    "category": "Arrays & Hashing",
+    "difficulty": "Easy",
+    "prompt": "Given an integer list nums, return True if any value appears at least twice, and False if every element is distinct. Implement `def contains_duplicate(nums: list[int]) -> bool`.",
+    "reference": "def contains_duplicate(nums: list[int]) -> bool:\n    seen = set()\n    for n in nums:\n        if n in seen:\n            return True\n        seen.add(n)\n    return False"
+  },
+  {
+    "id": "valid-anagram",
+    "title": "Valid Anagram",
+    "category": "Arrays & Hashing",
+    "difficulty": "Easy",
+    "prompt": "Given two strings s and t, return True if t is an anagram of s. Implement `def is_anagram(s: str, t: str) -> bool`.",
+    "reference": "from collections import Counter\n\n\ndef is_anagram(s: str, t: str) -> bool:\n    return len(s) == len(t) and Counter(s) == Counter(t)"
+  },
+  {
+    "id": "two-sum",
+    "title": "Two Sum",
+    "category": "Arrays & Hashing",
+    "difficulty": "Easy",
+    "prompt": "Given a list of integers nums and an integer target, return the indices of the two numbers that add up to target. Exactly one solution exists. Implement `def two_sum(nums: list[int], target: int) -> list[int]`.",
+    "reference": "def two_sum(nums: list[int], target: int) -> list[int]:\n    index = {}\n    for i, n in enumerate(nums):\n        if target - n in index:\n            return [index[target - n], i]\n        index[n] = i\n    return []"
+  },
+  {
+    "id": "group-anagrams",
+    "title": "Group Anagrams",
+    "category": "Arrays & Hashing",
+    "difficulty": "Medium",
+    "prompt": "Given a list of strings, group the anagrams together and return the groups in any order. Implement `def group_anagrams(strs: list[str]) -> list[list[str]]`.",
+    "reference": "from collections import defaultdict\n\n\ndef group_anagrams(strs: list[str]) -> list[list[str]]:\n    groups = defaultdict(list)\n    for s in strs:\n        groups[tuple(sorted(s))].append(s)\n    return list(groups.values())"
+  },
+  {
+    "id": "top-k-frequent",
+    "title": "Top K Frequent Elements",
+    "category": "Arrays & Hashing",
+    "difficulty": "Medium",
+    "prompt": "Given an integer list nums and an integer k, return the k most frequent elements in any order. Implement `def top_k_frequent(nums: list[int], k: int) -> list[int]`.",
+    "reference": "from collections import Counter\n\n\ndef top_k_frequent(nums: list[int], k: int) -> list[int]:\n    return [n for n, _ in Counter(nums).most_common(k)]"
+  },
+  {
+    "id": "valid-palindrome",
+    "title": "Valid Palindrome",
+    "category": "Two Pointers",
+    "difficulty": "Easy",
+    "prompt": "Return True if string s is a palindrome after lowercasing it and removing all non-alphanumeric characters. Implement `def is_palindrome(s: str) -> bool`.",
+    "reference": "def is_palindrome(s: str) -> bool:\n    left, right = 0, len(s) - 1\n    while left < right:\n        if not s[left].isalnum():\n            left += 1\n        elif not s[right].isalnum():\n            right -= 1\n        elif s[left].lower() != s[right].lower():\n            return False\n        else:\n            left += 1\n            right -= 1\n    return True"
+  },
+  {
+    "id": "container-with-most-water",
+    "title": "Container With Most Water",
+    "category": "Two Pointers",
+    "difficulty": "Medium",
+    "prompt": "Given a list height where height[i] is the height of a vertical line at position i, find two lines that together with the x-axis form a container holding the most water. Return that maximum area. Implement `def max_area(height: list[int]) -> int`.",
+    "reference": "def max_area(height: list[int]) -> int:\n    left, right = 0, len(height) - 1\n    best = 0\n    while left < right:\n        best = max(best, (right - left) * min(height[left], height[right]))\n        if height[left] < height[right]:\n            left += 1\n        else:\n            right -= 1\n    return best"
+  },
+  {
+    "id": "best-time-to-buy-and-sell-stock",
+    "title": "Best Time to Buy and Sell Stock",
+    "category": "Sliding Window",
+    "difficulty": "Easy",
+    "prompt": "Given a list prices where prices[i] is a stock price on day i, return the maximum profit from one buy followed by one later sell, or 0 if no profit is possible. Implement `def max_profit(prices: list[int]) -> int`.",
+    "reference": "def max_profit(prices: list[int]) -> int:\n    lowest = float('inf')\n    best = 0\n    for p in prices:\n        lowest = min(lowest, p)\n        best = max(best, p - lowest)\n    return best"
+  },
+  {
+    "id": "longest-substring-without-repeating",
+    "title": "Longest Substring Without Repeating Characters",
+    "category": "Sliding Window",
+    "difficulty": "Medium",
+    "prompt": "Given a string s, return the length of the longest substring without repeating characters. Implement `def length_of_longest_substring(s: str) -> int`.",
+    "reference": "def length_of_longest_substring(s: str) -> int:\n    last = {}\n    start = best = 0\n    for i, ch in enumerate(s):\n        if ch in last and last[ch] >= start:\n            start = last[ch] + 1\n        last[ch] = i\n        best = max(best, i - start + 1)\n    return best"
+  },
+  {
+    "id": "valid-parentheses",
+    "title": "Valid Parentheses",
+    "category": "Stack",
+    "difficulty": "Easy",
+    "prompt": "Given a string containing only the characters ()[]{}, return True if every bracket is closed by the same type in the correct order. Implement `def is_valid(s: str) -> bool`.",
+    "reference": "def is_valid(s: str) -> bool:\n    pairs = {')': '(', ']': '[', '}': '{'}\n    stack = []\n    for ch in s:\n        if ch in pairs:\n            if not stack or stack.pop() != pairs[ch]:\n                return False\n        else:\n            stack.append(ch)\n    return not stack"
+  },
+  {
+    "id": "binary-search",
+    "title": "Binary Search",
+    "category": "Binary Search",
+    "difficulty": "Easy",
+    "prompt": "Given a sorted list of integers nums and a target, return the index of target or -1 if it is absent. The solution must run in O(log n). Implement `def search(nums: list[int], target: int) -> int`.",
+    "reference": "def search(nums: list[int], target: int) -> int:\n    lo, hi = 0, len(nums) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if nums[mid] == target:\n            return mid\n        if nums[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1"
+  },
+  {
+    "id": "reverse-linked-list",
+    "title": "Reverse Linked List",
+    "category": "Linked List",
+    "difficulty": "Easy",
+    "prompt": "Given the head of a singly linked list (class ListNode with attributes val and next), reverse the list and return the new head. Implement `def reverse_list(head: ListNode | None) -> ListNode | None`.",
+    "reference": "def reverse_list(head):\n    prev = None\n    while head:\n        head.next, prev, head = prev, head, head.next\n    return prev"
+  },
+  {
+    "id": "invert-binary-tree",
+    "title": "Invert Binary Tree",
+    "category": "Trees",
+    "difficulty": "Easy",
+    "prompt": "Given the root of a binary tree (class TreeNode with attributes val, left and right), invert the tree by swapping every left and right child, and return its root. Implement `def invert_tree(root: TreeNode | None) -> TreeNode | None`.",
+    "reference": "def invert_tree(root):\n    if root is None:\n        return None\n    root.left, root.right = invert_tree(root.right), invert_tree(root.left)\n    return root"
+  },
+  {
+    "id": "number-of-islands",
+    "title": "Number of Islands",
+    "category": "Graphs",
+    "difficulty": "Medium",
+    "prompt": "Given a 2D grid of '1' (land) and '0' (water), return the number of islands. An island is land connected horizontally or vertically. Implement `def num_islands(grid: list[list[str]]) -> int`.",
+    "reference": "from collections import deque\n\n\ndef num_islands(grid: list[list[str]]) -> int:\n    rows, cols = len(grid), len(grid[0]) if grid else 0\n    seen = set()\n    count = 0\n    for r in range(rows):\n        for c in range(cols):\n            if grid[r][c] != '1' or (r, c) in seen:\n                continue\n            count += 1\n            queue = deque([(r, c)])\n            seen.add((r, c))\n            while queue:\n                y, x = queue.popleft()\n                for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):\n                    ny, nx = y + dy, x + dx\n                    if 0 <= ny < rows and 0 <= nx < cols and grid[ny][nx] == '1' and (ny, nx) not in seen:\n                        seen.add((ny, nx))\n                        queue.append((ny, nx))\n    return count"
+  },
+  {
+    "id": "climbing-stairs",
+    "title": "Climbing Stairs",
+    "category": "1-D Dynamic Programming",
+    "difficulty": "Easy",
+    "prompt": "You can climb 1 or 2 steps at a time. Return the number of distinct ways to reach the top of a staircase with n steps. Implement `def climb_stairs(n: int) -> int`.",
+    "reference": "def climb_stairs(n: int) -> int:\n    a, b = 1, 1\n    for _ in range(n):\n        a, b = b, a + b\n    return a"
+  },
+  {
+    "id": "coin-change",
+    "title": "Coin Change",
+    "category": "1-D Dynamic Programming",
+    "difficulty": "Medium",
+    "prompt": "Given a list of coin denominations and an amount, return the fewest coins needed to make the amount, or -1 if it cannot be made. Each coin may be used unlimited times. Implement `def coin_change(coins: list[int], amount: int) -> int`.",
+    "reference": "def coin_change(coins: list[int], amount: int) -> int:\n    dp = [0] + [amount + 1] * amount\n    for a in range(1, amount + 1):\n        for c in coins:\n            if c <= a:\n                dp[a] = min(dp[a], dp[a - c] + 1)\n    return dp[amount] if dp[amount] <= amount else -1"
+  },
+  {
+    "id": "subsets",
+    "title": "Subsets",
+    "category": "Backtracking",
+    "difficulty": "Medium",
+    "prompt": "Given a list of unique integers, return all possible subsets (the power set) in any order. Implement `def subsets(nums: list[int]) -> list[list[int]]`.",
+    "reference": "def subsets(nums: list[int]) -> list[list[int]]:\n    result = []\n    path = []\n\n    def backtrack(i: int) -> None:\n        if i == len(nums):\n            result.append(path.copy())\n            return\n        path.append(nums[i])\n        backtrack(i + 1)\n        path.pop()\n        backtrack(i + 1)\n\n    backtrack(0)\n    return result"
+  },
+  {
+    "id": "kth-largest-element",
+    "title": "Kth Largest Element in an Array",
+    "category": "Heap / Priority Queue",
+    "difficulty": "Medium",
+    "prompt": "Given an integer list nums and an integer k, return the kth largest element. Implement `def find_kth_largest(nums: list[int], k: int) -> int`.",
+    "reference": "import heapq\n\n\ndef find_kth_largest(nums: list[int], k: int) -> int:\n    heap = nums[:k]\n    heapq.heapify(heap)\n    for n in nums[k:]:\n        if n > heap[0]:\n            heapq.heapreplace(heap, n)\n    return heap[0]"
+  },
+  {
+    "id": "merge-intervals",
+    "title": "Merge Intervals",
+    "category": "Intervals",
+    "difficulty": "Medium",
+    "prompt": "Given a list of intervals [start, end], merge all overlapping intervals and return the result. Implement `def merge(intervals: list[list[int]]) -> list[list[int]]`.",
+    "reference": "def merge(intervals: list[list[int]]) -> list[list[int]]:\n    merged = []\n    for start, end in sorted(intervals):\n        if merged and start <= merged[-1][1]:\n            merged[-1][1] = max(merged[-1][1], end)\n        else:\n            merged.append([start, end])\n    return merged"
+  },
+  {
+    "id": "single-number",
+    "title": "Single Number",
+    "category": "Bit Manipulation",
+    "difficulty": "Easy",
+    "prompt": "Every element of the non-empty integer list nums appears twice except for one. Return that single element using O(1) extra space. Implement `def single_number(nums: list[int]) -> int`.",
+    "reference": "def single_number(nums: list[int]) -> int:\n    result = 0\n    for n in nums:\n        result ^= n\n    return result"
+  }
+]
